@@ -50,15 +50,14 @@ hashTable::hashTable(int size, std::string type)
 
 hashTable::~hashTable()
 {
-	delete linearTable;
-	delete quadraticTable;
+	delete []linearTable;
+	delete []quadraticTable;
 }
-int hashTable::hashFuncLinear(std::string pass, int round)
+int hashTable::hashFuncLinear(std::string pass, int round, int size)
 {
 	int numTot= 0;
 	int charTot= 0;
 	int j= round;
-	std::cout<<pass<<": \n";
 	for(unsigned short i=0; i<pass.length(); i++)
 	{
 		if(isdigit(pass[i]))
@@ -70,18 +69,17 @@ int hashTable::hashFuncLinear(std::string pass, int round)
 			charTot+= int(pass[i]);
 		}
 	}
-	std::cout<<"numTot+charTot= "<<charTot+numTot<<std::endl;
 	if(j > 0)
 	{
-		return((((charTot+numTot) % l_size)+j) % l_size);
+		return((((charTot+numTot) % size)+j) % size);
 	}
 	else
 	{
-		return((charTot+numTot) % l_size);
+		return((charTot+numTot) % size);
 	}
 }
 
-int hashTable::hashFuncQuadratic(std::string pass, int round)
+int hashTable::hashFuncQuadratic(std::string pass, int round, int size)
 {
 	int numTot= 0;
 	int charTot= 0;
@@ -99,11 +97,11 @@ int hashTable::hashFuncQuadratic(std::string pass, int round)
 	}
 	if(j>0)
 	{
-		return((((charTot+numTot) % q_size)+int(pow(2, j))) % q_size);
+		return((((charTot+numTot) % size)+ (j^2)) % size);
 	}
 	else
 	{
-		return((charTot+numTot) % q_size);
+		return((charTot+numTot) % size);
 	}
 }
 
@@ -111,13 +109,51 @@ void hashTable::reHashLinear(User* original)
 {
 	int newSize= findPrime(l_size*2);
 	User* tempTable= new User[newSize];
+	double newL_Factor= 0.0;
+	double new_userCount= 0.0;
+	newL_Factor= new_userCount/newSize;
+	for(int i=0; i<newSize; i++)
+	{
+		User tempUser("", "");
+		tempTable[i]= tempUser;
+	}
 	for(int i=0; i<l_size; i++)
 	{
-		tempTable->insertLinear(original[i].getName(), original[i].getPass());
+		if(original[i].getName() != "")
+		{
+			bool input= false;
+			int j=0;
+			int index= 0;
+			while(input == false)
+			{
+				User tempUser(original[i].getName(), original[i].getPass());
+				if(j == newSize)
+				{
+					std::cout<<"Overflow error. Could not insert value.\n";
+					break;
+				}
+				else
+				{
+					index= 	hashFuncLinear(original[i].getPass(), j, newSize);
+					if(tempTable[index].getName() == "")
+					{
+						new_userCount++;
+						newL_Factor= new_userCount/newSize;
+						tempTable[index]= tempUser;
+						input= true;
+					}
+					else
+					{
+						j++;
+					}	
+				}
+			}
+		}
 	}
+	l_userCount= new_userCount;
 	l_size= newSize;
-	l_loadFactor= l_userCount/newSize;
-	delete linearTable;
+	l_loadFactor= newL_Factor;
+	delete [] linearTable;
 	linearTable= tempTable;
 	tempTable= nullptr;
 }
@@ -125,6 +161,54 @@ void hashTable::reHashLinear(User* original)
 void hashTable::reHashQuadratic(User* original)
 {
 	int newSize= findPrime(q_size*2);
+	User* tempTable= new User[newSize];
+	double newQ_Factor= 0.0;
+	double new_userCount= 0.0;
+	newQ_Factor= new_userCount/newSize;
+	for(int i=0; i<newSize; i++)
+	{
+		User tempUser("", "");
+		tempTable[i]= tempUser;
+	}
+	for(int i=0; i<q_size; i++)
+	{
+		if(original[i].getName() != "")
+		{
+			bool input= false;
+			int j=0;
+			int index= 0;
+			while(input == false)
+			{
+				User tempUser(original[i].getName(), original[i].getPass());
+				if(j == newSize)
+				{
+					std::cout<<"Overflow error. Could not insert value.\n";
+					break;
+				}
+				else
+				{
+					index= 	hashFuncQuadratic(original[i].getPass(), j, newSize);
+					if(tempTable[index].getName() == "")
+					{
+						new_userCount++;
+						newQ_Factor= new_userCount/newSize;
+						tempTable[index]= tempUser;
+						input= true;
+					}
+					else
+					{
+						j++;
+					}	
+				}
+			}
+		}
+	}
+	q_userCount= new_userCount;
+	q_size= newSize;
+	q_loadFactor= newQ_Factor;
+	delete [] quadraticTable;
+	quadraticTable= tempTable;
+	tempTable= nullptr;
 }
 
 int hashTable::findPrime(int curSize)
@@ -177,20 +261,20 @@ void hashTable::insertLinear(std::string user, std::string pass)
 			if(j == l_size)
 			{
 				std::cout<<"Overflow error. Could not insert value.\n";
-				break;
+				return;
 			}
 			else
 			{
-				index= hashFuncLinear(pass, j);
+				index= hashFuncLinear(pass, j, l_size);
 				if(linearTable[index].getName() == "")
 				{
-					linearTable[index]= tempUser;
 					l_userCount++;
-					std::cout<<std::endl<<"loadFactor size: "<<l_size<<std::endl;
 					l_loadFactor= (l_userCount/l_size);
+					linearTable[index]= tempUser;
 					if(l_loadFactor > 0.5)
 					{
 						reHashLinear(linearTable);
+						return;
 					}
 					input= true;
 				}
@@ -220,21 +304,20 @@ void hashTable::insertQuadratic(std::string user, std::string pass)
 			if(j == q_size)
 			{
 				std::cout<<"Overflow error. Could not insert value.\n";
-				break;
+				return;
 			}
 			else
 			{
-				std::cout<<j<<": ";
-				index= 	hashFuncQuadratic(pass, j);
-				std::cout<<index<<std::endl;
+				index= hashFuncQuadratic(pass, j, q_size);
 				if(quadraticTable[index].getName() == "")
 				{
-					quadraticTable[index]= tempUser;
 					q_userCount++;
-					q_loadFactor= (q_userCount/l_size);
+					q_loadFactor= (q_userCount/q_size);
+					quadraticTable[index]= tempUser;
 					if(q_loadFactor > 0.5)
 					{
-						reHashLinear(quadraticTable);
+						reHashQuadratic(quadraticTable);
+						return;
 					}
 					input= true;
 				}
@@ -242,12 +325,12 @@ void hashTable::insertQuadratic(std::string user, std::string pass)
 				{
 					j++;
 				}
-			}	
+			}			
 		}
 	}
 	else
 	{
-		std::cout<<"Attempting insert on further accounts\n";
+		std::cout<<"Failure. Attempting insert on further accounts\n";
 	}
 }
 
@@ -269,7 +352,7 @@ bool hashTable::testUserPass(std::string user, std::string pass)
 			return false;
 		}
 	}
-	if(user.length() < 1 || user.length() > 7)
+	if(user.length() < 1 || user.length() > 6)
 	{
 		std::cout<<"Could not insert "<<user<<" due to invalid username. (Must be between 1 and 6 chars)\n";
 		return false;
@@ -318,6 +401,7 @@ void hashTable::printLinearTable()
 	{
 		std::cout<<i<<": "<<"User: "<<linearTable[i].getName()<<" Pass: "<<linearTable[i].getPass()<<std::endl;
 	}
+	std::cout<<"\n\n\n\n\n\n";
 }
 
 void hashTable::printQuadraticTable()
@@ -327,6 +411,7 @@ void hashTable::printQuadraticTable()
 	{
 		std::cout<<i<<": "<<"User: "<<quadraticTable[i].getName()<<" Pass: "<<quadraticTable[i].getPass()<<std::endl;
 	}
+	std::cout<<"\n\n\n\n\n\n";
 }
 
 int hashTable::getLinearSize()
@@ -337,4 +422,84 @@ int hashTable::getLinearSize()
 int hashTable::getQuadraticSize()
 {
 	return q_size;
+}
+
+void hashTable::forgotPassLinear(std::string username)
+{
+	for(int i=0; i<l_size; i++)
+	{
+		if(linearTable[i].getName() == username)
+		{
+			std::cout<<"The password associated with user "<<username<<" is: "<<linearTable[i].getPass()<<"\n\n\n\n\n";
+			return;
+		}
+	}
+	std::cout<<"This user was not in the table.\n\n\n";
+}
+
+void hashTable::forgotPassQuadratic(std::string username)
+{
+	for(int i=0; i<q_size; i++)
+	{
+		if(quadraticTable[i].getName() == username)
+		{
+			std::cout<<"The password associated with user "<<username<<" is: "<<quadraticTable[i].getPass()<<"\n\n\n\n\n";
+			return;
+		}
+	}
+}
+
+void hashTable::forgotUserLinear(std::string pass)
+{
+	for(int i=0; i<l_size; i++)
+	{
+		if(linearTable[i].getPass() == pass)
+		{
+			std::cout<<"The user associated with password "<<pass<<" is: "<<linearTable[i].getName()<<"\n\n\n\n\n";
+			return;
+		}
+	}
+	std::cout<<"This user was not in the table.\n\n\n";
+}
+
+void hashTable::forgotUserQuadratic(std::string pass)
+{
+	for(int i=0; i<q_size; i++)
+	{
+		if(quadraticTable[i].getPass() == pass)
+		{
+			std::cout<<"The user associated with password "<<pass<<" is: "<<quadraticTable[i].getName()<<"\n\n\n\n\n";
+			return;
+		}
+	}
+}
+
+void hashTable::removeUserLinear(std::string user, std::string pass)
+{
+	for(int i=0 ; i< l_size; i++)
+	{
+		if(linearTable[i].getName() == user && linearTable[i].getPass() == pass)
+		{
+			linearTable[i].setName("");
+			linearTable[i].setPass("");
+			std::cout<<"User is deleted from linear table\n";
+			return;
+		}
+	}
+	std::cout<<"The user is not in the linear table\n";
+}
+
+void hashTable::removeUserQuadratic(std::string user, std::string pass)
+{
+	for(int i=0 ; i< q_size; i++)
+	{
+		if(quadraticTable[i].getName() == user && quadraticTable[i].getPass() == pass)
+		{
+			quadraticTable[i].setName("");
+			quadraticTable[i].setPass("");
+			std::cout<<"User is deleted from the quadratic table\n";
+			return;
+		}
+	}
+	std::cout<<"The user is not in the quadratic table\n";
 }

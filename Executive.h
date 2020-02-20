@@ -10,6 +10,8 @@
 class Executive
 {
 	private:
+		hashTable *linearTable;
+		hashTable *quadraticTable;
 	public:
 		Executive(std::string fileName);
 		~Executive();

@@ -24,8 +24,8 @@ class hashTable
 		hashTable();
 		hashTable(int size, std::string type);
 		~hashTable();
-		int hashFuncLinear(std::string pass, int round);
-		int hashFuncQuadratic(std::string pass, int round);
+		int hashFuncLinear(std::string pass, int round, int size);
+		int hashFuncQuadratic(std::string pass, int round, int size);
 		void reHashLinear(User* original);
 		void reHashQuadratic(User* original);
 		int findPrime(int curSize);
@@ -39,5 +39,11 @@ class hashTable
 		void printQuadraticTable();
 		int getLinearSize();
 		int getQuadraticSize();
+		void forgotPassLinear(std::string username);
+		void forgotPassQuadratic(std::string username);
+		void forgotUserLinear(std::string pass);
+		void forgotUserQuadratic(std::string pass);
+		void removeUserLinear(std::string user, std::string pass);
+		void removeUserQuadratic(std::string user, std::string pass);
 };
 #endif

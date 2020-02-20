@@ -25,3 +25,13 @@ std::string User::getName()
 {
 	return userName;
 }
+
+void User::setPass(std::string pass)
+{
+	passWord= pass;
+}
+
+void User::setName(std::string name)
+{
+	userName= name;
+}

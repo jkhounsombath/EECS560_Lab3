@@ -16,6 +16,8 @@ class User
 		~User();
 		std::string getPass();
 		std::string getName();
+		void setPass(std::string pass);
+		void setName(std::string name);
 };
 #endif
 

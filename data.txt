@@ -6,4 +6,3 @@ angular, lang99
 hadoop, bgdt564
 spark, onl345
 csharp, pwd3456
-dotnet, onl223
