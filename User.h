@@ -7,10 +7,15 @@
 class User
 {
 	private:
-		std::string userName
-		std::string passWord
+		
+		std::string userName;
+		std::string passWord;
 	public:
-		hashFunction(std::string password);
+		User();
+		User(std::string user, std::string pass);
+		~User();
+		std::string getPass();
+		std::string getName();
 };
 #endif
 

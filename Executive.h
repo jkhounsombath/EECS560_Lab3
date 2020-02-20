@@ -10,7 +10,6 @@
 class Executive
 {
 	private:
-		hashTable HashTable;
 	public:
 		Executive(std::string fileName);
 		~Executive();
